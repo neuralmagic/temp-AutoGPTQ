@@ -330,6 +330,11 @@ class BaseGPTQForCausalLM(nn.Module, PushToHubMixin):
                     for k, v in layer_input_kwargs[j].items():
                         additional_layer_inputs[k] = nested_move_to_device(v, cur_layer_device)
                     layer(*layer_input, **additional_layer_inputs)
+                    layer_output = move_to_device(
+                        layer(*layer_input, **additional_layer_inputs)[0],
+                        cur_layer_device if cache_examples_on_gpu else CPU,
+                    )
+                    layer_outputs.append([layer_output])
                 for h in handles:
                     h.remove()
 
@@ -349,6 +354,7 @@ class BaseGPTQForCausalLM(nn.Module, PushToHubMixin):
                     )
                     gptq[name].free()
 
+            '''
             for j in range(num_batches):
                 layer_input = []
                 for k, layer_inp in enumerate(layer_inputs[j]):
@@ -366,6 +372,7 @@ class BaseGPTQForCausalLM(nn.Module, PushToHubMixin):
                     cur_layer_device if cache_examples_on_gpu else CPU,
                 )
                 layer_outputs.append([layer_output])
+            '''
 
             layers[i] = move_to_device(layer, CPU if force_layer_back_to_cpu else cur_layer_device)
             del layer
