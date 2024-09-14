@@ -329,7 +329,7 @@ class BaseGPTQForCausalLM(nn.Module, PushToHubMixin):
                         additional_layer_inputs["position_ids"] = layer_position_ids
                     for k, v in layer_input_kwargs[j].items():
                         additional_layer_inputs[k] = nested_move_to_device(v, cur_layer_device)
-                    layer(*layer_input, **additional_layer_inputs)
+                    #layer(*layer_input, **additional_layer_inputs)
                     layer_output = move_to_device(
                         layer(*layer_input, **additional_layer_inputs)[0],
                         cur_layer_device if cache_examples_on_gpu else CPU,
