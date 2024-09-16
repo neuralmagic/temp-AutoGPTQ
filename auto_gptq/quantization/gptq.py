@@ -90,6 +90,7 @@ class GPTQ:
         zero = []
         now_idx = 1
 
+        '''
         if static_groups:
             import copy
 
@@ -100,6 +101,17 @@ class GPTQ:
                 scale.append(quantizer.scale)
                 zero.append(quantizer.zero)
                 groups.append(quantizer)
+        '''
+
+        import copy
+
+        groups = []
+        for i in range(0, self.columns, group_size):
+            quantizer = copy.deepcopy(self.quantizer)
+            quantizer.find_params(W[:, i : (i + group_size)], weight=True)
+            scale.append(quantizer.scale)
+            zero.append(quantizer.zero)
+            groups.append(quantizer)
 
         if actorder:
             perm = torch.argsort(torch.diag(H), descending=True)
@@ -133,19 +145,10 @@ class GPTQ:
                 d = Hinv1[i, i]
 
                 if group_size != -1:
-                    if not static_groups:
-                        if (i1 + i) % group_size == 0:
-                            self.quantizer.find_params(W[:, (i1 + i) : (i1 + i + group_size)], weight=True)
-
-                        if ((i1 + i) // group_size) - now_idx == -1:
-                            scale.append(self.quantizer.scale)
-                            zero.append(self.quantizer.zero)
-                            now_idx += 1
-                    else:
-                        idx = i1 + i
-                        if actorder:
-                            idx = perm[idx]
-                        self.quantizer = groups[idx // group_size]
+                    idx = i1 + i
+                    if actorder:
+                        idx = perm[idx]
+                    self.quantizer = groups[idx // group_size]
 
                 q = self.quantizer.quantize(w.unsqueeze(1)).flatten()
                 Q1[:, i] = q
